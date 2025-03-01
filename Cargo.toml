@@ -1,0 +1,9 @@
+[package]
+name = "genedeck"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+arrayvec = "0.7.6"
+bitflags = "2.9.0"
+rand = "0.9.0"
