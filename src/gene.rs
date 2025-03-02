@@ -1,47 +1,19 @@
-use crate::{protein::Protein, weight_rule::calculate_gene_weight};
+use crate::{
+    protein::{self, Protein},
+    weight_rule::calculate_gene_weight,
+};
 use rand::Rng;
 use std::{cmp::Ordering, fmt::Display};
-
-#[derive(Debug)]
-pub struct Mutation {
-    index: usize,
-    old_protein: Protein,
-    new_protein: Protein,
-}
-
-impl Mutation {
-    pub fn new(index: usize, old_protein: Protein, new_protein: Protein) -> Self {
-        Self {
-            index,
-            old_protein,
-            new_protein,
-        }
-    }
-
-    pub fn index(&self) -> usize {
-        self.index
-    }
-
-    pub fn old_protein(&self) -> Protein {
-        self.old_protein
-    }
-
-    pub fn new_protein(&self) -> Protein {
-        self.new_protein
-    }
-}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Gene([Protein; 4]);
 
 impl Gene {
     pub fn genesis() -> Self {
-        let proteins = [
-            Protein::random(),
-            Protein::random(),
-            Protein::random(),
-            Protein::random(),
-        ];
+        let mut proteins = [Protein::default(); 4];
+        for index in 0..4 {
+            proteins[index] = Protein::random();
+        }
         Self(proteins)
     }
 
@@ -51,25 +23,28 @@ impl Gene {
 
     pub fn value(&self) -> f32 {
         let value: u64 = self.0.iter().map(|p| p.value() as u64).sum();
-        let weight = calculate_gene_weight(&self.0);
+        let weight = calculate_gene_weight(&self.proteins());
         value as f32 * weight
     }
 
-    pub fn mutate(&mut self) -> Mutation {
+    fn proteins(&self) -> Vec<Protein> {
+        self.0.iter().copied().collect()
+    }
+
+    pub fn mutate(&mut self) {
         let index = rand::rng().random_range(0..4);
         let actual_protein = self.0[index];
         let new_protein = Protein::random_except(actual_protein);
         self.0[index] = new_protein;
-        Mutation::new(index, actual_protein, new_protein)
     }
 
-    pub fn merge(&self, other: &Gene) -> Gene {
+    pub fn merge(&self, other: &Gene, asc: bool) -> Gene {
         for (x, y) in self.0.iter().zip(other.0.iter()) {
-            match x.cmp(y) {
-                Ordering::Greater => return self.clone(),
-                Ordering::Less => return other.clone(),
-                Ordering::Equal => continue,
-            }
+            match (x.cmp(y), asc) {
+                (Ordering::Greater, true) | (Ordering::Less, false) => self.clone(),
+                (Ordering::Less, true) | (Ordering::Greater, false) => other.clone(),
+                (Ordering::Equal, _) => continue,
+            };
         }
 
         return self.clone();
@@ -132,25 +107,25 @@ mod tests {
 
     #[test]
     fn test_add() {
-        let gene1 = Gene::new([Protein::A, Protein::T, Protein::G, Protein::C]);
-        let gene2 = Gene::new([Protein::A, Protein::T, Protein::G, Protein::C]);
-        assert_eq!(gene1.merge(&gene2), gene1);
+        let gene1 = Gene::new([Protein::G, Protein::G, Protein::G, Protein::T]);
+        let gene2 = Gene::new([Protein::T, Protein::G, Protein::T, Protein::C]);
+        assert_eq!(gene1.merge(&gene2, true), gene1);
 
         let gene1 = Gene::new([Protein::A, Protein::T, Protein::G, Protein::C]);
         let gene2 = Gene::new([Protein::C, Protein::T, Protein::G, Protein::C]);
-        assert_eq!(gene1.merge(&gene2), gene2);
+        assert_eq!(gene1.merge(&gene2, true), gene2);
 
         let gene1 = Gene::new([Protein::A, Protein::C, Protein::G, Protein::C]);
         let gene2 = Gene::new([Protein::A, Protein::A, Protein::G, Protein::C]);
-        assert_eq!(gene1.merge(&gene2), gene1);
+        assert_eq!(gene1.merge(&gene2, true), gene1);
 
         let gene1 = Gene::new([Protein::A, Protein::T, Protein::G, Protein::C]);
         let gene2 = Gene::new([Protein::A, Protein::T, Protein::G, Protein::T]);
-        assert_eq!(gene1.merge(&gene2), gene2);
+        assert_eq!(gene1.merge(&gene2, true), gene2);
 
         let gene1 = Gene::new([Protein::A, Protein::T, Protein::G, Protein::C]);
         let gene2 = Gene::new([Protein::A, Protein::T, Protein::G, Protein::A]);
-        assert_eq!(gene1.merge(&gene2), gene1);
+        assert_eq!(gene1.merge(&gene2, true), gene1);
     }
 
     #[test]

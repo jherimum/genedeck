@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default, Hash)]
 pub enum Protein {
     #[default]
     A,
@@ -12,7 +12,9 @@ pub enum Protein {
 impl Protein {
     pub fn random() -> Self {
         use rand::Rng;
-        match rand::rng().random_range(0..4) {
+
+        let mut x = rand::rng();
+        match x.random_range(0..4) {
             0 => Protein::A,
             1 => Protein::C,
             2 => Protein::G,
@@ -69,5 +71,26 @@ impl Into<u8> for &Protein {
             Protein::G => 2,
             Protein::C => 3,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rand::Rng;
+
+    use super::Protein;
+
+    #[test]
+    fn random() {
+        println!("{:?}", rand::rng().random_range(0..4));
+        println!("{:?}", rand::rng().random_range(0..4));
+        println!("{:?}", rand::rng().random_range(0..4));
+        println!("{:?}", rand::rng().random_range(0..4));
+        println!("{:?}", rand::rng().random_range(0..4));
+        // let p1 = Protein::random();
+        // let p2 = Protein::random();
+
+        // println!("{:?}", p1);
+        // println!("{:?}", p2);
     }
 }
