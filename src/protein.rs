@@ -66,10 +66,10 @@ impl From<u8> for Protein {
 impl Into<u8> for &Protein {
     fn into(self) -> u8 {
         match self {
-            Protein::A => 0,
-            Protein::T => 1,
-            Protein::G => 2,
-            Protein::C => 3,
+            Protein::A => 1,
+            Protein::T => 2,
+            Protein::G => 3,
+            Protein::C => 4,
         }
     }
 }

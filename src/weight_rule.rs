@@ -1,10 +1,9 @@
 use crate::protein::Protein;
 use std::collections::HashSet;
 
-static SEQUENCE_WEIGTH_RULES: &[Rule] =
-    &[start_end_same_protein, contain_all_proteins, same_proteins];
+static SEQUENCE_WEIGTH_RULES: &[Rule] = &[];
 
-static GENE_WEIGTH_RULES: &[Rule] = &[start_end_same_protein, contain_all_proteins, same_proteins];
+static GENE_WEIGTH_RULES: &[Rule] = &[];
 
 pub type Rule = fn(&[Protein]) -> f32;
 
@@ -47,15 +46,17 @@ fn contain_all_proteins(proteins: &[Protein]) -> f32 {
 }
 
 pub fn calculate_sequence_weight(proteins: &[Protein]) -> f32 {
-    SEQUENCE_WEIGTH_RULES
-        .iter()
-        .fold(0.0, |acc, rule| acc + rule(proteins))
+    // SEQUENCE_WEIGTH_RULES
+    //     .iter()
+    //     .fold(0.0, |acc, rule| acc + rule(proteins))
+    1.0
 }
 
 pub fn calculate_gene_weight(proteins: &[Protein]) -> f32 {
-    GENE_WEIGTH_RULES
-        .iter()
-        .fold(0.0, |acc, rule| acc + rule(proteins))
+    // GENE_WEIGTH_RULES
+    //     .iter()
+    //     .fold(0.0, |acc, rule| acc + rule(proteins))
+    1.0
 }
 
 #[cfg(test)]

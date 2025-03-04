@@ -1,7 +1,4 @@
-use crate::{
-    protein::{self, Protein},
-    weight_rule::calculate_gene_weight,
-};
+use crate::protein::Protein;
 use rand::Rng;
 use std::{cmp::Ordering, fmt::Display};
 
@@ -10,21 +7,27 @@ pub struct Gene([Protein; 4]);
 
 impl Gene {
     pub fn genesis() -> Self {
-        let mut proteins = [Protein::default(); 4];
-        for index in 0..4 {
-            proteins[index] = Protein::random();
-        }
-        Self(proteins)
+        Self([
+            Protein::random(),
+            Protein::random(),
+            Protein::random(),
+            Protein::random(),
+        ])
     }
 
     pub fn new(proteins: [Protein; 4]) -> Self {
         Self(proteins)
     }
 
-    pub fn value(&self) -> f32 {
-        let value: u64 = self.0.iter().map(|p| p.value() as u64).sum();
-        let weight = calculate_gene_weight(&self.proteins());
-        value as f32 * weight
+    pub fn value(&self) -> u64 {
+        let value: u64 = self
+            .0
+            .iter()
+            .enumerate()
+            .map(|(ix, protein)| ((ix + 1) as u8 * protein.value()) as u64)
+            .sum();
+        let weight = 1.1; // calculate_gene_weight(&self.proteins());
+        (value as f32 * weight).trunc() as u64
     }
 
     fn proteins(&self) -> Vec<Protein> {
@@ -33,9 +36,7 @@ impl Gene {
 
     pub fn mutate(&mut self) {
         let index = rand::rng().random_range(0..4);
-        let actual_protein = self.0[index];
-        let new_protein = Protein::random_except(actual_protein);
-        self.0[index] = new_protein;
+        self.0[index] = Protein::random();
     }
 
     pub fn merge(&self, other: &Gene, asc: bool) -> Gene {
@@ -53,7 +54,7 @@ impl Gene {
 
 impl Default for Gene {
     fn default() -> Self {
-        Self([Protein::A, Protein::A, Protein::A, Protein::A])
+        Self([Protein::T, Protein::G, Protein::C, Protein::A])
     }
 }
 
@@ -68,6 +69,7 @@ impl Display for Gene {
         for protein in self.0.iter() {
             write!(f, "{}", protein)?;
         }
+        write!(f, "::{} ", self.value())?;
         Ok(())
     }
 }

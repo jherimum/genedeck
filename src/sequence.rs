@@ -1,4 +1,5 @@
 use crate::{gene::Gene, protein::Protein, weight_rule::calculate_sequence_weight};
+use arrayvec::ArrayVec;
 use rand::Rng;
 use std::fmt::Display;
 
@@ -21,51 +22,45 @@ impl Into<Vec<Protein>> for &Sequence {
 impl Sequence {
     /// Create a new sequence with 4 random genes and 4 default genes
     pub fn genesis() -> Self {
-        let mut sequence = [Gene::default(); 8];
-        sequence.iter_mut().enumerate().for_each(|(index, gene)| {
-            if index < 4 {
-                *gene = Gene::genesis();
-            }
-        });
-        Self(sequence)
+        let head = [
+            Gene::genesis(),
+            Gene::genesis(),
+            Gene::genesis(),
+            Gene::genesis(),
+        ];
+        let tail = [Gene::default(); 4];
+        let concat: ArrayVec<Gene, 8> = head.into_iter().chain(tail.into_iter()).collect();
+        Self(concat.into_inner().unwrap())
     }
 
     pub fn new(genes: [Gene; 8]) -> Self {
         Self(genes)
     }
 
-    pub fn value(&self) -> f32 {
-        let value = self
-            .0
-            .iter()
-            .enumerate()
-            .fold(0.0, |acc, (index, gene)| match even(index) {
-                true => acc + gene.value() as f32,
-                false => acc - gene.value() as f32,
-            });
-
+    pub fn value(&self) -> u64 {
+        let value: u64 = self.0.iter().map(Gene::value).sum();
         let proteins: Vec<Protein> = self.into();
         let weigth = calculate_sequence_weight(&proteins);
-
-        value * weigth
+        (value as f32 * weigth).trunc() as u64
     }
 
     /// Merge two sequences and mutate the last 4 genes
     pub fn merge(&self, other: &Sequence) -> Sequence {
         let mut genes = [Gene::default(); 8];
         for index in 0..8 {
-            let gene = self.0[index].merge(&other.0[index], even(index));
+            let mut gene = self.0[index].merge(&other.0[index], even(index));
+            if index > 3 {
+                gene.mutate();
+            }
             genes[index] = gene;
         }
-        let mut sequence = Self(genes);
-        sequence.mutate();
 
-        sequence
+        Self(genes)
     }
 
     /// Mutate a random gene from the last 4 genes
     pub fn mutate(&mut self) {
-        let index = rand::rng().random_range(5..8);
+        let index = rand::rng().random_range(0..8);
         self.0[index].mutate();
     }
 }
@@ -119,15 +114,9 @@ mod test {
         //     "AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA"
         // );
 
-        for _ in 0..100 {
-            let sequence = Sequence::genesis();
-            println!("sequence-0 {}: {}", sequence, sequence.value());
-            let sequence1 = Sequence::genesis();
-            println!("sequence-1 {}: {}", sequence1, sequence1.value());
-            let sequence2 = sequence.merge(&sequence1);
-            println!("sequence-2 {}: {}", sequence2, sequence2.value());
-
-            println!("-------------------------")
+        for i in 0..10 {
+            let mut sequence = Sequence::genesis();
+            println!("sequence-{} {}: {}", i, sequence, sequence.value());
         }
     }
 }
